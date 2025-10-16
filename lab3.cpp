@@ -46,16 +46,17 @@ struct tagBITMAPINFOHEADER
 };
 #pragma pack(pop)
 
-void rotate(BYTE *data, BYTE *src, int width, int height, int rowSize, int bytesPerPixel, float angle) 
+void rotate(BYTE *data, BYTE *src, int width, int height, int rowSize, int bytesPerPixel, float angle, int start, int end)
 {
     // Iterate through the output rows (y) and columns (x)
-    for (int y = 0; y < height; y++) 
+    for (int y = start; y <= end; y++) 
     {
         for (int x = 0; x < width; x++) 
         {
             // Pointer to pixel (BGR) inside the row with padding
             // File row index bottom up starting from bottom left
             BYTE *pixel = data + (size_t)(y * rowSize + (size_t)x * bytesPerPixel);
+        
 
             // Turns (0,0) into the center of the image in the output
             // Tracing backward from the OUTPUT pixel to figure out where its color originally came from before rotation
@@ -75,7 +76,7 @@ void rotate(BYTE *data, BYTE *src, int width, int height, int rowSize, int bytes
             if (x_o >= 0 && x_o < width && y_o >= 0 && y_o < height) 
             {
                 // Pointer to the original pixel (BGR) inside the row with padding
-                BYTE *spx = src + (size_t)y_o * rowSize + (size_t)x_o * bytesPerPixel;
+                BYTE *spx = src +(size_t)y_o * rowSize + (size_t)x_o * bytesPerPixel;
                 pixel[0] = spx[0]; // Blue
                 pixel[1] = spx[1]; // Green
                 pixel[2] = spx[2]; // Red
@@ -149,8 +150,6 @@ int main(int argc, char *argv[]) {
     fread(src, 1, dataSize, f);
     fclose(f);
 
-    int newWidth = width;
-    int newHeight = height;
 
     // Convert factor from degrees to radians
     factor = factor * (M_PI / 180.0);
@@ -162,12 +161,14 @@ int main(int argc, char *argv[]) {
     {
         if (fork() == 0)
         {
-            rotate(data + i * (dataSize / operation), src + i * (dataSize / operation), newWidth, newHeight / operation, rowSize, bytesPerPixel, factor);
+            rotate(data, src, width, height, rowSize, bytesPerPixel, factor, (dataSize / operation) * i, (dataSize / operation) * (i + 1));
+            //rotate(data + (dataSize / operation) * i, src + (dataSize / operation) * (i + 1), width, height, rowSize, bytesPerPixel, factor);
+
             return 0;
         }
     }
 
-    //rotate(data + (operation - 1) * (dataSize / operation), src + (operation - 1) * (dataSize / operation), newWidth, newHeight / operation, rowSize, bytesPerPixel, factor);
+    //rotate(data + (operation) * (dataSize / operation), src + (operation ) * (dataSize / operation) , newWidth, newHeight / operation, rowSize, bytesPerPixel, factor);
     
     // 3 Ways to wait for child processes to finish
     // 1. wait for a specific pid
