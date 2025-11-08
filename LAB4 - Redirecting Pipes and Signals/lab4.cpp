@@ -39,7 +39,8 @@ int main()
     char *text = (char*)malloc(100);
     pid_t pid = fork();
 
-    if (pid == 0) {
+    if (pid == 0) 
+    {
         // In child process: wait for 10 seconds, if no activity from parent, then overwrite stdin and print message. 
         // Restore stdin afterwards to let parent read normally from keyboard again
         close(fd[0]);          
@@ -47,12 +48,14 @@ int main()
         {
             sleep(5);
             // If parent has written something, activity has incremented, skip this iteration of the for loop -> start 10 sec again
-            if (*activity == true) {
+            if (*activity == true) 
+            {
                 *activity = false;  // Reset for next check
                 continue;
             }
 
-            else {
+            else 
+            {
                 // Send signal to parent FIRST to redirect stdin
                 kill(parentPID, SIGUSR1);
                 
@@ -64,17 +67,20 @@ int main()
             }           
         }
     }
-    else {         
+    else 
+    {         
         // In parent process: continuously read from stdin (terminal), write to pipe, and print what is read    
         close(fd[1]); 
         int save_stdin = dup(STDIN_FILENO);     // Save original stdin (THE TERMINAL)
         signal(SIGUSR1, mysignalhandler);       // Initialize signal handler -> read from pipe when signal received from child (kill it)
 
-        for (;;){
+        for (;;)
+        {
             scanf("%s", text);
             
             // Check if this input came from the pipe 
-            if (from_pipe) {
+            if (from_pipe) 
+            {
                 printf("%s\n", text);  // Print the inactivity message 
                 dup2(save_stdin, STDIN_FILENO); // Restore stdin to terminal
                 from_pipe = 0;  // Reset flag
